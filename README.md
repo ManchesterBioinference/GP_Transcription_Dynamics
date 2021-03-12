@@ -4,4 +4,4 @@ Transcriptional regulation with Gaussian processes.\
 
 ## Dependencies
 
-Will add later. 
+Still setting-up the project. See the notebooks for some results. 
