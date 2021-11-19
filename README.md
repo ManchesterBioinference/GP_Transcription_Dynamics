@@ -1,6 +1,6 @@
 # TRGP
 
-Transcriptional regulation with Gaussian processes.\
+Transcriptional regulation with Gaussian processes.
 
 ## Dependencies
 
