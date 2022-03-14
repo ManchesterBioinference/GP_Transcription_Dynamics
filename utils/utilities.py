@@ -348,7 +348,7 @@ def create_trcd_model(data: Data, initial_lengthscale: Initial_lengthscale, init
     initial_variance_p = mean_var_p
     initial_variance = max_val_p
 
-    S_prior = tfd.Gamma(concentration=dfloat(2.0), rate=dfloat(2.))
+    S_prior = tfd.Gamma(concentration=dfloat(2.0), rate=dfloat(2.0))
     D_prior = tfd.Gamma(concentration=dfloat(2.0), rate=dfloat(2.0))
 
     if protein:
@@ -404,8 +404,6 @@ def create_trcd_model(data: Data, initial_lengthscale: Initial_lengthscale, init
 '''
 Optimization/CI functions
 '''
-
-
 def optimize_with_scipy_optimizer(trcd: TRCD, parameters: List[gpflow.Parameter], maxiter: int = 100):
     opt = gpflow.optimizers.Scipy()
     loss_cb = tf.function(trcd.model.training_loss, autograph=False)

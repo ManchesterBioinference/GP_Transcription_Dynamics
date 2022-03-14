@@ -85,7 +85,8 @@ def analyse_samples(gene_id, tr_id, parameters_vector , step_size, unconstrained
                     dict_parameters: dict = None,
                     pathname: str = None):
     """
-    Plotting and saving graphs on disk.
+    Plotting and saving graphs on disk;
+    Saving samples and df with HPD summaries.
     """
     path = Path(pathname)
     path.mkdir(exist_ok=True, parents=True)
@@ -113,9 +114,6 @@ def analyse_samples(gene_id, tr_id, parameters_vector , step_size, unconstrained
         par_names.append(parameter_names[i])
         acceptance_rate.append(accrate(np.array(constrained_samples[i])))
 
-
-
-    #acc_result = np.concatenate((np.array(par_names).reshape(-1,1), np.array(cceptance_rate).reshape(-1,1), np.array(step_size)), axis=1)
     acc_result = np.concatenate((np.array(par_names).reshape(-1,1), np.array(acceptance_rate).reshape(-1,1)), axis=1)
     df_acc = pd.DataFrame(acc_result)
     df_acc.columns = ['parameter','acceptance_rate']

@@ -23,7 +23,6 @@ gpflow.config.set_default_float(np.float64)  # noqa
 
 Scalar = TypeVar("Scalar", tf.Tensor, float)
 
-
 def run_mcmc(run_chain_fn: Callable,
              hmc_helper: SamplingHelper,
              step_size: Scalar):

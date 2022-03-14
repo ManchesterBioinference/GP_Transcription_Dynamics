@@ -9,3 +9,7 @@ TRCD -- main model with constant degradation parameter.
 See requirenments.txt
 
 
+
+
+
+
