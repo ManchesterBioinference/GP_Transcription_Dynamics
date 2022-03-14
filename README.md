@@ -8,6 +8,11 @@ TRCD -- main model with constant degradation parameter.
 
 See requirenments.txt
 
+## Expeiments:
+-- filtering of the genes (identifying differentially expressed genes);
+-- optimization of the parameters in transcriptional regulation model;
+-- MCMC for uncertainty quantification using MALA. 
+
 
 
 
