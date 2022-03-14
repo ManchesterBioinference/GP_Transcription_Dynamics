@@ -1,0 +1,6 @@
+,parameter,acceptance_rate
+0,D,1e-05
+1,variance,1e-05
+2,lengthscale,1e-05
+3,variance_m,1e-05
+4,variance_p,1e-05
