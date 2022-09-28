@@ -41,16 +41,18 @@ class Kernel_mRNA(gpflow.kernels.Kernel):
         l = self.lengthscale
         v = self.variance
 
+        #jitter = 10**-1
+
         gamma = 0.5 * D * l
         sqrt_pi = tf.convert_to_tensor(np.sqrt(np.pi), dtype=l.dtype)
         half_lengthscale_sqrt_pi = 0.5 * sqrt_pi * l
 
-        xx_const = S**2 * half_lengthscale_sqrt_pi
-        xf_const = S * half_lengthscale_sqrt_pi
+        xx_const = v * S**2 * half_lengthscale_sqrt_pi # v is the variance from RBF
+        xf_const = v * S * half_lengthscale_sqrt_pi    # v is the variance from RBF
 
         if n == m:
-            x1 = a_input[0:n]
-            x2 = tf.linalg.adjoint(b_input[0:m])
+            x1 = a_input[0:n]                                # in computing k(t,t'),
+            x2 = tf.linalg.adjoint(b_input[0:m])             # t = (x1, x1_f) and t'=k(x2, x2_f)
 
             x1_f = a_input[n:(2*n+1)]
             x2_f = tf.linalg.adjoint(b_input[m:(2*m+1)])
@@ -64,29 +66,49 @@ class Kernel_mRNA(gpflow.kernels.Kernel):
             x2_tmp_f = tf.linalg.adjoint(b_input[m:(2*m+1)])
             x2_f = tf.broadcast_to(x2_tmp_f, [n, m])
 
+
         # Defines h(t',t)
-        def h_tt(t, t_prime):
+        def h_tt(t_prime, t):
             """ Computes h(t, t') """
             a = 0.5 * tf.math.exp(gamma**2) / D
-            diff_t = t - t_prime
-            #b = tf.math.exp(-D * diff_t)
+            diff_t = t_prime - t
             b = tf.math.exp(-D * diff_t)
-            c = tf.math.erf(diff_t / l - gamma) + tf.math.erf(t_prime / l + gamma)
-            #d = tf.math.exp(-D * (t + 1))
-            d = tf.math.exp(-D * (t + t_prime)) # changes based on file derivation_asynchronous4.pdf
+            c = tf.math.erf(diff_t / l - gamma) + tf.math.erf(t / l + gamma)
+            #d = tf.math.exp(-D * (t_prime + 1))
+            d = tf.math.exp(-D * (t + t_prime)) # in the old version
             e = tf.math.erf(t / l - gamma) + tf.math.erf(gamma)
             return a * (b * c - d * e)
 
-        def k_xf(t, t_prime):
-            diff_t = t - t_prime
+        def k_xf(t_prime, t):
+            diff_t = t_prime - t
             a = tf.math.exp(-D * diff_t)
-            b = tf.math.erf(diff_t / l - gamma) + tf.math.erf(t_prime / l + gamma)
+            b = tf.math.erf(diff_t / l - gamma) + tf.math.erf(t / l + gamma)
             return xf_const * tf.math.exp(gamma**2) * a * b
 
+        # def k_xf(t, t_prime):
+        #     diff_t = t_prime - t
+        #     const_a = -1/np.sqrt(2)
+        #     const_b = np.sqrt(np.pi)*S*v*l
+        #
+        #     a = tf.exp(D*diff_t+D**2*l**2/2)
+        #     b = tf.math.erf((np.sqrt(2)*diff_t+np.sqrt(2)*D*l**2)/(2*l))
+        #     c = tf.math.erf((t_prime+D*l**2)/(np.sqrt(2)*l))
+        #
+        #     #a = tf.math.exp(-D * diff_t)
+        #     #b = tf.math.erf(diff_t / l - gamma) + tf.math.erf(t / l + gamma)
+        #     return const_a*const_b*(a*(b-c))
+
         kxx = xx_const * (h_tt(x1, x2) + h_tt(x2, x1))
-        kxf = k_xf(x1, x2)
-        kfx = k_xf(x2, x1)
-        kff = v * tf.math.exp(-0.5 * ((x1_f - x2_f) / l)**2)
+        #kxx = xx_const * (h_tt(x2, x1) + h_tt(x1, x2))
+        #if n == m:
+        #    kxx += jitter * tf.eye(n, dtype=kxx.dtype)
+
+        kxf = k_xf(x1, x2_f)
+        kfx = k_xf(x2_f, x1)
+
+        kff = v * tf.math.exp(-((x1_f - x2_f) / l)**2)
+        #if n == m:
+        #    kff += jitter * tf.eye(n, dtype=kff.dtype)
 
         # Combine four blocks together
         output_n = 2 * kxx.shape[-2]
@@ -97,6 +119,8 @@ class Kernel_mRNA(gpflow.kernels.Kernel):
     def K_diag(self, a_input: tf.Tensor, presliced: bool = False):
         assert a_input.shape[0] % 2 == 0
 
+        #jitter = 10**-1
+
         v = self.variance
         l = self.lengthscale
         D = self.D
@@ -104,20 +128,22 @@ class Kernel_mRNA(gpflow.kernels.Kernel):
 
         n = a_input.shape[0] // 2
         pi = tf.convert_to_tensor(np.pi, dtype=l.dtype)
-        xx_const = 0.5 * S**2 * tf.math.sqrt(pi) * l
+        xx_const = v * 0.5 * S**2 * tf.math.sqrt(pi) * l # new update since we scale each covariance block by v
         gamma = 0.5 * D * l
 
         x = a_input[0:n]
 
         a = 0.5 * tf.math.exp(gamma**2) / D
         b = tf.math.erf(-gamma) + tf.math.erf(x / l + gamma)
-        c = tf.math.exp(-2.0 * D * x)
+        c = tf.math.exp(- 2 * D * x) # in the old version
+        #c = tf.math.exp(- D * (x+1))
         d = tf.math.erf(x / l - gamma) + tf.math.erf(gamma)
 
         upper_block = tf.reshape(xx_const * 2.0 * a * (b - c * d), [-1])
         lower_block = tf.fill([n], tf.squeeze(v))
 
         return tf.concat([upper_block, lower_block], axis=0)
+
 
 
 class White_mRNA(gpflow.kernels.Kernel):

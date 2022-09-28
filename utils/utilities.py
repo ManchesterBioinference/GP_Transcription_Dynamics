@@ -17,8 +17,7 @@ import gpflow
 from gpflow.config import default_float
 import sys
 sys.path.append('..')
-from trcd.model import (TRCD, TRCD_delay, TRCD_discontinuous)
-from trcd.model import m_premRNA
+from trcd.model import TRCD
 from trcd.synthetic_data import setup_full_data, setup_problem
 from trcd.utils import SamplingHelper
 from gpflow.utilities import print_summary
@@ -115,7 +114,7 @@ def distance_from_mean(model, observations, num_predict: int = 100):
 #################################################################################
 def fit_rbf(data, init_lengthscale, init_variance):
     k = gpflow.kernels.RBF()
-    m = gpflow.models.GPR(data, kernel=k,mean_function=gpflow.mean_functions.Constant(c=None))
+    m = gpflow.models.GPR(data, kernel=k)
     m.likelihood.variance.assign(0.01)
     def objective_closure():
         return m.training_loss()
@@ -274,7 +273,6 @@ def load_single_gene_normalized(gene_id, tr_id, time_points_to_normalize, norm_m
 
     #print('After normalization', data_p[time_points_to_normalize])
 
-
     t0 = np.array((95.0,105.0,115.0,125.0,145.0,160.0,175.0,190.0,205.0,220.0))
     rep_no = 3
     t = np.hstack((t0,t0,t0))[:,None]
@@ -299,7 +297,7 @@ def create_data() -> Tuple[Tuple[tf.Tensor, tf.Tensor], Tuple[tf.Tensor, tf.Tens
     observations = (dfloat(tp_obs), dfloat(ym), dfloat(yp))
     return full_data, observations
 
-def load_single_gene(gene_id, tr_id) -> Tuple[Tuple[tf.Tensor, tf.Tensor], Tuple[tf.Tensor, tf.Tensor, tf.Tensor]]:
+def load_single_gene0(gene_id, tr_id) -> Tuple[Tuple[tf.Tensor, tf.Tensor], Tuple[tf.Tensor, tf.Tensor, tf.Tensor]]:
     # data = pd.read_csv('density_data_pickedup_cluster10.txt',sep=" ")
     #data = pd.read_csv('density_data_keepdensitysumover10_withcluster.txt',sep=" ")
     data1 = pd.read_csv('../data/LB_GP_TS.csv', sep=",")
@@ -311,6 +309,12 @@ def load_single_gene(gene_id, tr_id) -> Tuple[Tuple[tf.Tensor, tf.Tensor], Tuple
     #genes = pd.read_csv('genes_Yuliya_full.csv',sep=" ")
     data_m = data1[data1['FBtr'] == tr_id].iloc[0][1:31].to_numpy()
     data_p = data2[data2['FBgn'] == gene_id].iloc[0][31:61].to_numpy()
+
+    #data_m = data_m*10.0
+    #data_p = data_p*10.0
+
+    print('1000/length',1000/data2[data2['FBgn'] == gene_id].iloc[0][62])
+    print('length',data2[data2['FBgn'] == gene_id].iloc[0][62])
 
     t0 = np.array((95.0,105.0,115.0,125.0,145.0,160.0,175.0,190.0,205.0,220.0))
     rep_no = 3
@@ -327,64 +331,310 @@ def load_single_gene(gene_id, tr_id) -> Tuple[Tuple[tf.Tensor, tf.Tensor], Tuple
     observations_p = (dfloat(tp_obs), dfloat(yp))
     return full_data, observations, gene_id, full_data_p, observations_p
 
-'''
-Create model
-'''
-def create_trcd_model(data: Data, initial_lengthscale: Initial_lengthscale, initial_variance: Initial_variance,initial_S: Initial_S,
-                      transform_base: Optional[tfp.bijectors.Bijector] = None, protein = False) -> Tuple[TRCD, List[gpflow.Parameter]]:
+def load_single_gene1(gene_id, tr_id) -> Tuple[Tuple[tf.Tensor, tf.Tensor], Tuple[tf.Tensor, tf.Tensor, tf.Tensor]]:
+    # data = pd.read_csv('density_data_pickedup_cluster10.txt',sep=" ")
+    #data = pd.read_csv('density_data_keepdensitysumover10_withcluster.txt',sep=" ")
+    data1 = pd.read_csv('../data/LB_GP_TS.csv', sep=",")
+    data2 = pd.read_csv('../data/Exon_intron_counts_data_normalizedbylibrarydepthonly_20200120.txt',sep=" ")
+    #data1 = pd.read_csv('LB_genes_from_tr.csv',sep=",")
+    gene_id = gene_id
+    data1 = data1[data1['FBtr'] == tr_id]
+    data2 = data2[data2['FBgn'] == gene_id]
+    #genes = pd.read_csv('genes_Yuliya_full.csv',sep=" ")
+    data_m = data1[data1['FBtr'] == tr_id].iloc[0][1:31].to_numpy()
+    data_p = data2[data2['FBgn'] == gene_id].iloc[0][31:61].to_numpy()/data2[data2['FBgn'] == gene_id].iloc[0][62]
+
+    data_p = data_p*1000.0
+
+    #data_m = data_m*10.0
+    #data_p = data_p*10.0
+
+    print('1000/length',1000/data2[data2['FBgn'] == gene_id].iloc[0][62])
+    print('length',data2[data2['FBgn'] == gene_id].iloc[0][62])
+
+    t0 = np.array((95.0,105.0,115.0,125.0,145.0,160.0,175.0,190.0,205.0,220.0))
+    rep_no = 3
+    t = np.hstack((t0,t0,t0))[:,None]
+
+    tp_obs = np.asarray(t)
+    ym = np.asarray(data_m, dtype=np.float)
+    yp = np.asarray(data_p, dtype=np.float)
+    y_full = tf.convert_to_tensor(np.vstack((ym, yp)).reshape(60, 1))
+    x_full = tf.convert_to_tensor(np.vstack((tp_obs, tp_obs)).reshape(60, 1))
+    full_data = (dfloat(x_full), dfloat(y_full))
+    full_data_p = (dfloat(tp_obs), dfloat(yp))
+    observations = (dfloat(tp_obs), dfloat(ym), dfloat(yp))
+    observations_p = (dfloat(tp_obs), dfloat(yp))
+    return full_data, observations, gene_id, full_data_p, observations_p
+
+def load_single_gene_scaled(gene_id, tr_id) -> Tuple[Tuple[tf.Tensor, tf.Tensor], Tuple[tf.Tensor, tf.Tensor, tf.Tensor]]:
+
+    # data = pd.read_csv('density_data_pickedup_cluster10.txt',sep=" ")
+    #data = pd.read_csv('density_data_keepdensitysumover10_withcluster.txt',sep=" ")
+    data1 = pd.read_csv('../data/LB_GP_TS.csv', sep=",")
+    data2 = pd.read_csv('../data/Exon_intron_counts_data_normalizedbylibrarydepthonly_20200120.txt',sep=" ")
+    #data1 = pd.read_csv('LB_genes_from_tr.csv',sep=",")
+    gene_id = gene_id
+    data1 = data1[data1['FBtr'] == tr_id]
+    data2 = data2[data2['FBgn'] == gene_id]
+    #genes = pd.read_csv('genes_Yuliya_full.csv',sep=" ")
+    data_m = data1[data1['FBtr'] == tr_id].iloc[0][1:31].to_numpy()
+    data_p = data2[data2['FBgn'] == gene_id].iloc[0][31:61].to_numpy()/data2[data2['FBgn'] == gene_id].iloc[0][62]
+
+    data_p = data_p*1000.0
+
+    data_m = data_m/10.0
+    data_p = data_p/10.0
+
+    #data_m =  data_m/np.sqrt(3.00865)
+    #data_p =  data_p/np.sqrt(3.00865)
+
+    print('1000/length',1000/data2[data2['FBgn'] == gene_id].iloc[0][62])
+    print('length',data2[data2['FBgn'] == gene_id].iloc[0][62])
+
+    t0 = np.array((95.0,105.0,115.0,125.0,145.0,160.0,175.0,190.0,205.0,220.0))
+    rep_no = 3
+    t = np.hstack((t0,t0,t0))[:,None]
+
+
+
+    tp_obs = np.asarray(t)
+    ym = np.asarray(data_m, dtype=np.float)
+    yp = np.asarray(data_p, dtype=np.float)
+    y_full = tf.convert_to_tensor(np.vstack((ym, yp)).reshape(60, 1))
+    x_full = tf.convert_to_tensor(np.vstack((tp_obs, tp_obs)).reshape(60, 1))
+    full_data = (dfloat(x_full), dfloat(y_full))
+    full_data_p = (dfloat(tp_obs), dfloat(yp))
+    observations = (dfloat(tp_obs), dfloat(ym), dfloat(yp))
+    observations_p = (dfloat(tp_obs), dfloat(yp))
+    observations_m = (dfloat(tp_obs), dfloat(ym))
+    return full_data, observations, gene_id, full_data_p, observations_p
+
+
+def load_single_gene(gene_id, tr_id) -> Tuple[Tuple[tf.Tensor, tf.Tensor], Tuple[tf.Tensor, tf.Tensor, tf.Tensor]]:
+
+    # data = pd.read_csv('density_data_pickedup_cluster10.txt',sep=" ")
+    #data = pd.read_csv('density_data_keepdensitysumover10_withcluster.txt',sep=" ")
+    data1 = pd.read_csv('../data/LB_GP_TS.csv', sep=",")
+    data2 = pd.read_csv('../data/Exon_intron_counts_data_normalizedbylibrarydepthonly_20200120.txt',sep=" ")
+    #data1 = pd.read_csv('LB_genes_from_tr.csv',sep=",")
+    gene_id = gene_id
+    data1 = data1[data1['FBtr'] == tr_id]
+    data2 = data2[data2['FBgn'] == gene_id]
+    #genes = pd.read_csv('genes_Yuliya_full.csv',sep=" ")
+    data_m = data1[data1['FBtr'] == tr_id].iloc[0][1:31].to_numpy()
+    data_p = data2[data2['FBgn'] == gene_id].iloc[0][31:61].to_numpy()/data2[data2['FBgn'] == gene_id].iloc[0][62]
+
+    data_p = data_p*1000.0
+
+    #data_m = data_m/10.0
+    #data_p = data_p/10.0
+
+    #data_m =  data_m/np.sqrt(3.00865)
+    #data_p =  data_p/np.sqrt(3.00865)
+
+    print('1000/length',1000/data2[data2['FBgn'] == gene_id].iloc[0][62])
+    print('length',data2[data2['FBgn'] == gene_id].iloc[0][62])
+
+    t0 = np.array((95.0,105.0,115.0,125.0,145.0,160.0,175.0,190.0,205.0,220.0))
+    rep_no = 3
+    t = np.hstack((t0,t0,t0))[:,None]
+
+
+
+    tp_obs = np.asarray(t)
+    ym = np.asarray(data_m, dtype=np.float)
+    yp = np.asarray(data_p, dtype=np.float)
+    y_full = tf.convert_to_tensor(np.vstack((ym, yp)).reshape(60, 1))
+    x_full = tf.convert_to_tensor(np.vstack((tp_obs, tp_obs)).reshape(60, 1))
+    full_data = (dfloat(x_full), dfloat(y_full))
+    full_data_p = (dfloat(tp_obs), dfloat(yp))
+    observations = (dfloat(tp_obs), dfloat(ym), dfloat(yp))
+    observations_p = (dfloat(tp_obs), dfloat(yp))
+    observations_m = (dfloat(tp_obs), dfloat(ym))
+    return full_data, observations, gene_id, full_data_p, observations_p
+
+# '''
+# Create model
+# '''
+# def create_trcd_model(data: Data, initial_lengthscale: Initial_lengthscale, initial_variance: Initial_variance,initial_S: Initial_S,initial_D: Initial_D,
+#                       transform_base: Optional[tfp.bijectors.Bijector] = None, protein = False) -> Tuple[TRCD, List[gpflow.Parameter]]:
+#     """
+#     Creates a TRCD model with initial parameters
+#     """
+#     mean_var_m = np.mean(np.var(np.asarray(data[1][0:30]).reshape(3,10), axis = 0))
+#     mean_var_p = np.mean(np.var(np.asarray(data[1][30:60]).reshape(3,10), axis = 0))
+#     max_val_p = np.max(data[1][30:60])
+#     min_val_p = np.min(data[1][30:60])
+#
+#     #print('mean_var_p', mean_var_p)
+#
+#
+#     alpha_m, beta_m = compute_prior_hyperparameters_variance(mean_var_m, 0.1*mean_var_m)
+#     alpha_p, beta_p = compute_prior_hyperparameters_variance(mean_var_p, 0.1*mean_var_p)
+#     #alpha, beta = compute_prior_hyperparameters_variance(max_val_p, 0.1*max_val_p)
+#     alpha, beta = compute_prior_hyperparameters_variance(2*np.sqrt(max_val_p), 0.1*2*np.sqrt(max_val_p))
+#
+#     initial_variance_m = mean_var_m
+#     initial_variance_p = mean_var_p
+#     initial_variance = initial_variance
+#
+#     #S_prior = tfd.Gamma(concentration=dfloat(0.7), rate=dfloat(2.0))
+#     #S_prior = tfd.Normal(loc=dfloat(0.35), scale=dfloat(1.0))
+#     #S_prior = tfp.distributions.TruncatedNormal(dfloat(0),dfloat(2),dfloat(0.01),dfloat(3.0))
+#     #D_prior = tfd.Gamma(concentration=dfloat(1.0), rate=dfloat(2.0))
+#     #D_prior = tfd.Normal(loc=dfloat(0.5), scale=dfloat(1.0))
+#     #D_prior = tfp.distributions.TruncatedNormal(dfloat(0),dfloat(2),dfloat(10**-6),dfloat(0.6))
+#
+#     #S_prior = tfp.distributions.Uniform(low = dfloat(0.01),high = dfloat(3.0))
+#     #D_prior = tfp.distributions.Uniform(low = dfloat(10**-6),high = dfloat(0.7))
+#
+#     S_prior = tfd.Gamma(concentration=dfloat(0.7), rate=dfloat(2.0))
+#     #S_prior = tfd.Uniform(low = dfloat(10**-6),high = dfloat(1.0))
+#     #S_prior = tfd.Normal(loc=dfloat(0.35), scale=dfloat(2.0))
+#     #D_prior = tfd.Gamma(concentration=dfloat(2.0), rate=dfloat(2.0))
+#     D_prior = tfd.Gamma(concentration=dfloat(2.0), rate=dfloat(2.0))
+#
+#
+#     #variance_m_prior = tfd.Gamma(concentration=dfloat(alpha_m), rate=dfloat(beta_m))
+#     #variance_p_prior = tfd.Gamma(concentration=dfloat(alpha_p), rate=dfloat(beta_p))
+#
+#     variance_m_prior = tfd.Normal(loc=dfloat(np.sqrt(mean_var_m)), scale=dfloat(0.2*np.sqrt(mean_var_m)))
+#     variance_p_prior = tfd.Normal(loc=dfloat(np.sqrt(mean_var_p)), scale=dfloat(0.2*np.sqrt(mean_var_p)))
+#
+#     #variance_m_prior = tfd.Normal(loc=dfloat(mean_var_m), scale=dfloat(mean_var_m/2))
+#     #variance_p_prior = tfd.Normal(loc=dfloat(initial_variance_p), scale=dfloat(0.5*initial_variance_p))
+#
+#     transform = gpflow.utilities.positive if transform_base is None else transform_base
+#
+#     S = gpflow.Parameter(initial_S, transform=transform(), prior=S_prior)
+#     D = gpflow.Parameter(initial_D, transform=transform(), prior=D_prior)
+#
+#     #S = gpflow.Parameter(initial_S, transform=transform())
+#     #D = gpflow.Parameter(initial_D, transform=transform())
+#
+#
+#     #variance_m = gpflow.Parameter(initial_variance_m, transform=transform(), prior=variance_m_prior)
+#     #variance_p = gpflow.Parameter(initial_variance_p, transform=transform(), prior=variance_p_prior)
+#
+#     variance_m = gpflow.Parameter(initial_variance_m, transform=transform())
+#     variance_p = gpflow.Parameter(initial_variance_p, transform=transform())
+#
+#     set_kernel_prior = True
+#     if set_kernel_prior:
+#         #variance = gpflow.Parameter(initial_variance,
+#         #                            transform=transform(),
+#         #                            prior=tfd.Normal(loc=dfloat(2*np.sqrt(max_val_p)), scale=dfloat(0.01*2*np.sqrt(max_val_p))))
+#         #variance = gpflow.Parameter(initial_variance,
+#         #                            transform=transform(),
+#         #                            prior=tfd.Normal(loc=dfloat(max_val_p), scale=dfloat(0.01*max_val_p)))
+#         variance = gpflow.Parameter(initial_variance,
+#                                     transform=transform(),
+#                                     prior=tfd.Gamma(concentration=dfloat(alpha), rate=dfloat(beta)))
+#         #variance = gpflow.Parameter(initial_variance,
+#         #                            transform=transform(),
+#         #                            prior=tfd.Uniform(low=dfloat(0.0001*max_val_p), high=dfloat(max_val_p)))
+#         lengthscale = gpflow.Parameter(initial_lengthscale,
+#                                            transform=transform(),
+#                                            prior=tfd.Gamma(concentration=dfloat(155.0), rate=dfloat(10.5))) # These one was set up for good MCMC
+#         #lengthscale = gpflow.Parameter(initial_lengthscale, transform=transform())
+#         #lengthscale = gpflow.Parameter(initial_lengthscale, transform=transform())
+#         #variance = gpflow.Parameter(initial_variance,
+#         #                            transform=transform(),
+#         #                            prior=tfd.Gamma(concentration=dfloat(alpha), rate=dfloat(beta)))
+#         #variance = gpflow.Parameter(initial_variance, transform=transform())
+#         #lengthscale = gpflow.Parameter(initial_lengthscale,
+#         #                                   transform=transform(),
+#         #                                   prior=tfd.Normal(loc=dfloat(20.0), scale=dfloat(10.5))) # These one was set up for good MCMC
+#     else:
+#         #lengthscale = gpflow.Parameter(initial_lengthscale,
+#         #                               transform=transform(),
+#         #                               prior=tfd.Gamma(concentration=dfloat(155.0), rate=dfloat(10.5))) # These one was set up for good MCMC
+#
+#         variance = gpflow.Parameter(initial_variance, transform=transform())
+#         lengthscale = gpflow.Parameter(initial_lengthscale, transform=transform())
+#
+#     parameters = OrderedDict(D=D,
+#                              S=S,
+#                              variance=variance,
+#                              lengthscale=lengthscale,
+#                              variance_m = variance_m,
+#                              variance_p = variance_p
+#                              )
+#
+#     return TRCD(data, **parameters), parameters
+
+def create_trcd_model(data: Data, initial_lengthscale: Initial_lengthscale, initial_variance: Initial_variance,initial_S: Initial_S,initial_D: Initial_D,
+                       transform_base: Optional[tfp.bijectors.Bijector] = None, protein = False) -> Tuple[TRCD, List[gpflow.Parameter]]:
     """
     Creates a TRCD model with initial parameters
     """
-    mean_var_m = np.max(np.std(np.asarray(data[1][0:30]).reshape(3,10), axis = 0))
-    mean_var_p = np.max(np.std(np.asarray(data[1][30:60]).reshape(3,10), axis = 0))
+    #mean_var_m = np.max(np.var(np.asarray(data[1][0:30]).reshape(3,10), axis = 0))
+    #mean_var_p = np.max(np.var(np.asarray(data[1][30:60]).reshape(3,10), axis = 0))
+    mean_var_m = np.mean(np.var(np.asarray(data[1][0:30]).reshape(3,10), axis = 0))
+    mean_var_p = np.mean(np.var(np.asarray(data[1][30:60]).reshape(3,10), axis = 0))
     max_val_p = np.max(data[1][30:60])
+    min_val_p = np.min(data[1][30:60])
 
 
-    alpha_m, beta_m = compute_prior_hyperparameters_variance(mean_var_m, 0.1*mean_var_m)
-    alpha_p, beta_p = compute_prior_hyperparameters_variance(mean_var_p, 0.1*mean_var_p)
-    alpha, beta = compute_prior_hyperparameters_variance(max_val_p, 0.01*max_val_p)
+    alpha_m, beta_m = compute_prior_hyperparameters_variance(mean_var_m, 0.2*mean_var_m)
+    alpha_p, beta_p = compute_prior_hyperparameters_variance(mean_var_p, 0.2*mean_var_p)
+    #alpha, beta = compute_prior_hyperparameters_variance(max_val_p, 0.01*max_val_p)
+    #alpha, beta = compute_prior_hyperparameters_variance(((max_val_p-min_val_p)/2)**2, 0.5*(((max_val_p-min_val_p)/2)**2))
+    alpha, beta = compute_prior_hyperparameters_variance(initial_variance, 0.5*initial_variance)
+    alpha_l, beta_l = compute_prior_hyperparameters_variance(initial_lengthscale, 0.5*initial_lengthscale)
 
     initial_variance_m = mean_var_m
     initial_variance_p = mean_var_p
     initial_variance = max_val_p
 
-    S_prior = tfd.Gamma(concentration=dfloat(2.0), rate=dfloat(2.0))
+    S_prior = tfd.Gamma(concentration=dfloat(0.7), rate=dfloat(2.0))
     D_prior = tfd.Gamma(concentration=dfloat(2.0), rate=dfloat(2.0))
+    #D_prior = tfd.Gamma(concentration=dfloat(1.0), rate=dfloat(1.0))
 
-    if protein:
-        # For analyzing protein data
-        variance_m_prior = tfd.Gamma(concentration=dfloat(2.0), rate=dfloat(5.))
-        variance_p_prior = tfd.Gamma(concentration=dfloat(2.0), rate=dfloat(5.))
-    else:
-        variance_m_prior = tfd.Gamma(concentration=dfloat(alpha_m), rate=dfloat(beta_m))
-        variance_p_prior = tfd.Gamma(concentration=dfloat(alpha_p), rate=dfloat(beta_p))
+
+
+    variance_m_prior = tfd.Gamma(concentration=dfloat(alpha_m), rate=dfloat(beta_m))
+    variance_p_prior = tfd.Gamma(concentration=dfloat(alpha_p), rate=dfloat(beta_p))
 
     transform = gpflow.utilities.positive if transform_base is None else transform_base
 
     S = gpflow.Parameter(initial_S, transform=transform(), prior=S_prior)
-    D = gpflow.Parameter(1.1, transform=transform(), prior=D_prior)
+    #D = gpflow.Parameter(1.1, transform=transform(), prior=D_prior)
+    D = gpflow.Parameter(initial_D, transform=transform(), prior=D_prior)
 
-    if protein:
-        variance_m = gpflow.Parameter(1.0, transform=transform(), prior=variance_m_prior)
-        variance_p = gpflow.Parameter(1.0, transform=transform(), prior=variance_p_prior)
-    else:
-        variance_m = gpflow.Parameter(initial_variance_m, transform=transform(), prior=variance_m_prior)
-        variance_p = gpflow.Parameter(initial_variance_p, transform=transform(), prior=variance_p_prior)
+
+    variance_m = gpflow.Parameter(initial_variance_m, transform=transform(), prior=variance_m_prior)
+    variance_p = gpflow.Parameter(initial_variance_p, transform=transform(), prior=variance_p_prior)
+
     set_kernel_prior = True
     if set_kernel_prior:
 
         variance = gpflow.Parameter(initial_variance,
-                                    transform=transform(),
-                                    prior=tfd.Gamma(concentration=dfloat(alpha), rate=dfloat(beta)))
-        if protein:
-            lengthscale = gpflow.Parameter(initial_lengthscale,
-                                           transform=transform(),
-                                           prior=tfd.Gamma(concentration=dfloat(8.91924 ), rate=dfloat(34.5805 ))) # These one was set up for protein paper
-        else:
+                                   transform=transform(),
+                                   prior=tfd.Gamma(concentration=dfloat(alpha), rate=dfloat(beta)))
+        # variance = gpflow.Parameter(initial_lengthscale,
+        #                                transform=transform(),
+        #                                prior=tfp.distributions.Uniform(low = dfloat(10.00),high = dfloat(40.0))) # These one was set up for good MCMC
 
-            lengthscale = gpflow.Parameter(initial_lengthscale,
-                                           transform=transform(),
-                                           prior=tfd.Gamma(concentration=dfloat(155.0), rate=dfloat(10.5))) # These one was set up for good MCMC
+
+        #lengthscale = gpflow.Parameter(initial_lengthscale,
+        #                               transform=transform(),
+        #                               prior=tfd.Gamma(concentration=dfloat(155.0), rate=dfloat(10.5))) # These one was set up for good MCMC
+        #lengthscale = gpflow.Parameter(initial_lengthscale,
+        #                              transform=transform(),
+        #                              prior=tfd.Gamma(concentration=dfloat(90.0), rate=dfloat(3.0))) # These one was set up for good MCMC
+        lengthscale = gpflow.Parameter(initial_lengthscale,
+                                       transform=transform(),
+                                       prior=tfd.Gamma(concentration=dfloat(alpha_l), rate=dfloat(beta_l))) # These one was set up for good MCMC
+
+        # lengthscale = gpflow.Parameter(initial_lengthscale,
+        #                                transform=transform(),
+        #                                prior=tfp.distributions.Uniform(low = dfloat(20.00),high = dfloat(40.0))) # These one was set up for good MCMC
+
+                                        #S_prior = tfp.distributions.Uniform(low = dfloat(0.01),high = dfloat(3.0))
+                                       #     #D_prior = tfp.distributions.Uniform(low = dfloat(10**-6),high = dfloat(0.7))
+
     else:
         variance = gpflow.Parameter(initial_variance, transform=transform())
         lengthscale = gpflow.Parameter(initial_lengthscale, transform=transform())
@@ -398,8 +648,6 @@ def create_trcd_model(data: Data, initial_lengthscale: Initial_lengthscale, init
                              )
 
     return TRCD(data, **parameters), parameters
-
-
 
 '''
 Optimization/CI functions
@@ -436,12 +684,13 @@ def compute_prior_hyperparameters_variance(mean, variance):
     return alpha, beta
 
 
-def plot_trcd_predict(cluster, trcd: tf.Module, tr_id, gene_id, observations: Observations, var_m_noise, var_p_noise, num_predict: int = 100):
+def plot_trcd_predict(cluster,  trcd: tf.Module, tr_id, gene_id, observations: Observations, var_m_noise, var_p_noise, num_predict: int = 100):
 
     tp_obs, ym, yp = [np.array(o) for o in observations]
 
     xx = np.linspace(np.min(tp_obs), np.max(tp_obs), num_predict).reshape(num_predict, 1)
-    xx_full = np.concatenate((xx, xx)).reshape(-1, 1)
+    xx1 = np.linspace(np.min(tp_obs), np.max(tp_obs), num_predict).reshape(num_predict, 1)
+    xx_full = np.concatenate((xx, xx1)).reshape(-1, 1)
     #
     #gpflow.config.set_default_jitter(0.5)
     try:
@@ -450,6 +699,7 @@ def plot_trcd_predict(cluster, trcd: tf.Module, tr_id, gene_id, observations: Ob
     except:
         print('predicted y failed, predicted f')
         mean, var = trcd.model.predict_f(xx_full)
+
     mean1 = mean[0:num_predict]
     mean2 = mean[num_predict:2 * num_predict]
     var1 = var[0:num_predict]
@@ -457,23 +707,23 @@ def plot_trcd_predict(cluster, trcd: tf.Module, tr_id, gene_id, observations: Ob
 
     # Plot predicted model
     fig, ax1 = plt.subplots(figsize=(12, 6))
-    ax1.set_ylabel('mRNA', color='r', size = 16)
+    ax1.set_ylabel('mRNA', color='r', size = 22)
     ax1.plot(tp_obs.flatten(), ym.flatten(), 'rx', mew=2)
-    ax1.tick_params(axis='both', which='major', labelsize=16)
+    ax1.tick_params(axis='both', which='major', labelsize=22)
     ax1.plot(xx[:, 0], mean1[:, 0], 'r', lw=2)
     ax1.fill_between(xx[:, 0],
                          mean1[:, 0] - 2 * np.sqrt(var1[:, 0])-2* np.sqrt(var_m_noise),
                          mean1[:, 0] + 2 * np.sqrt(var1[:, 0])+2* np.sqrt(var_m_noise),
                          color='red',
                          alpha=0.2)
-    #plt.ylim((-20.0, 60.0))
+    ##plt.ylim((-20.0, 60.0))
 
     ax2 = ax1.twinx()
-    ax2.set_ylabel('pre-mRNA', color='b',  size = 16)
-    ax2.set_xlabel('Time (mins)',  size = 16)
+    ax2.set_ylabel('pre-mRNA', color='b',  size = 22)
+    ax2.set_xlabel('Time (mins)',  size = 22)
 
 
-    ax2.tick_params(axis='both', which='major', labelsize=16)
+    ax2.tick_params(axis='both', which='major', labelsize=22)
     ax2.plot(tp_obs.flatten(), yp.flatten(), 'bx', mew=2)
     ax2.plot(xx[:, 0], mean2[:, 0], 'b', lw=2)
     plt.fill_between(xx[:, 0],
@@ -481,10 +731,10 @@ def plot_trcd_predict(cluster, trcd: tf.Module, tr_id, gene_id, observations: Ob
                      mean2[:, 0] + 2 * np.sqrt(var2[:, 0])+2* np.sqrt(var_p_noise),
                      color='blue',
                      alpha=0.2)
-    #plt.ylim((-20.0, 60.0))
-    plt.xlabel('Time (mins)', size = 16)
-    plt.title(str(gene_id)+' '+str(tr_id), fontsize=18)
-    plt.savefig(str(cluster)+'_'+str(gene_id)+'_'+str(tr_id)+'.png')
+    ##plt.ylim((-20.0, 60.0))
+    plt.xlabel('Time (mins)', size = 22)
+    plt.title(str(gene_id)+' '+str(tr_id), fontsize=22)
+    plt.savefig(f"../output/fit_figures/"+str(cluster)+'_'+str(gene_id)+'_'+str(tr_id)+'.png')
 
 
 def predict_trcd(trcd: tf.Module, gene_id, observations: Observations, num_predict: int = 100):
@@ -508,47 +758,6 @@ def predict_trcd(trcd: tf.Module, gene_id, observations: Observations, num_predi
     dist_mean = 0.05 * np.sum(((mean_ym - mean1[:, 0])**2 + (mean_yp - mean2[:, 0])**2))
     dist_var = 0.05 * np.sum(((mean_ym - (mean1[:, 0] + 2 * np.sqrt(var1[:, 0])))**2 + (mean_yp - (mean2[:, 0]+2 * np.sqrt(var2[:, 0])))**2))
     return dist_mean , dist_var
-
-def plot_trcd_predict_posterior_samples(trcd: tf.Module, gene_id, observations: Observations, num_predict: int = 100):
-
-    tp_obs, ym, yp = [np.array(o) for o in observations]
-    #num_predict = 1000
-    xx = np.linspace(np.min(tp_obs), np.max(tp_obs), num_predict).reshape(num_predict, 1)
-    xx_full = np.concatenate((xx, xx)).reshape(-1, 1)
-    mean, var = trcd.model.predict_f(xx_full)
-    num_samples = 1
-    samples = trcd.model.predict_f_samples(xx_full, num_samples)
-    mean1 = mean[0:num_predict]
-    mean2 = mean[num_predict:2 * num_predict]
-    var1 = var[0:num_predict]
-    var2 = var[num_predict:2 * num_predict]
-
-    # Plot predicted model
-    fig, ax1 = plt.subplots(figsize=(12, 6))
-    ax1.set_ylabel('mRNA', color='r')
-    ax1.plot(tp_obs.flatten(), ym.flatten(), 'rx', mew=2)
-    ax1.plot(xx[:, 0], mean1[:, 0], 'r', lw=2)
-    ax1.fill_between(xx[:, 0],
-                         mean1[:, 0] - 2 * np.sqrt(var1[:, 0]),
-                         mean1[:, 0] + 2 * np.sqrt(var1[:, 0]),
-                         color='red',
-                         alpha=0.2)
-    print(samples[:, 0:num_predict, 0].numpy().T.shape)
-    ax1.plot(xx, samples[:,0:num_predict, 0].numpy().T, 'r', linewidth=.5)
-
-    ax2 = ax1.twinx()
-    ax2.set_ylabel('premRNA', color='b')
-    ax2.plot(tp_obs.flatten(), yp.flatten(), 'bx', mew=2)
-    ax2.plot(xx[:, 0], mean2[:, 0], 'b', lw=2)
-    ax2.plot(xx, samples[:,num_predict:(2*num_predict), 0].numpy().T, 'b', linewidth=.5)
-    plt.fill_between(xx[:, 0],
-                     mean2[:, 0] - 2 * np.sqrt(var2[:, 0]),
-                     mean2[:, 0] + 2 * np.sqrt(var2[:, 0]),
-                     color='blue',
-                     alpha=0.2)
-    plt.title(str(gene_id), fontsize=18)
-    plt.savefig(str(gene_id)+'_tf2_'+'.png')
-
 
 
 '''
@@ -658,9 +867,10 @@ def create_mala_mcmc(trcd: TRCD,
                                                      num_adaptation_steps=int(0.75*2000),
                                                      target_accept_prob=0.75,
                                                      adaptation_rate=0.1)
+                                                     #adaptation_rate=0.01)
 
         return mcmc.sample_chain(num_results=100000,
-                                 num_burnin_steps=2000,
+                                 num_burnin_steps=20000,
                                  current_state=state_variables,
                                  kernel=mala, trace_fn=None)
 
