@@ -2,8 +2,13 @@ from typing import Tuple, TypeVar
 
 import numpy as np
 import pandas as pd
+
+
+
 import tensorflow as tf
 import tensorflow_probability as tfp
+
+exit()
 import matplotlib.pyplot as plt
 
 import gpflow
@@ -14,6 +19,7 @@ sys.path.append('..')
 from utils.utilities import (create_data, load_data, load_single_gene, load_filtered_data, create_standard_mcmc, create_trcd_model,
                        optimize_with_scipy_optimizer,  fit_rbf, predict_trcd,
                        plot_trcd_predict, select_parameters, init_hyperparameters, compute_hessian)
+
 
 gpflow.config.set_default_float(np.float64)  # noqa
 
