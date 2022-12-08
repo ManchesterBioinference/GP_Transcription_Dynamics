@@ -1,16 +1,9 @@
 from typing import Tuple, TypeVar
-
 import numpy as np
 import pandas as pd
-
-
-
 import tensorflow as tf
 import tensorflow_probability as tfp
-
-exit()
 import matplotlib.pyplot as plt
-
 import gpflow
 from gpflow.config import default_float
 from gpflow.utilities import print_summary
@@ -54,30 +47,14 @@ def main():
     recorded_transcripts = []
     all_genes = []
     all_transcripts = []
-    #parameters_estimates_all_genes = np.zeros((n_genes,6*3))
 
     parameters_estimates_all_genes = np.zeros((n_genes,6*3))
 
-    #for i in range(n_genes):
-    for i in range(1):
-        #gene_id = names_transcripts['FBgn'].iloc[i]
-        #tr_id = names_transcripts['FBtr'].iloc[i]
-
-
-        #gene_id = 'FBgn0266129'
-        #tr_id = 'FBtr0072458'
+    for i in range(n_genes):
         gene_id = names_transcripts['gene_id'].iloc[i]
         tr_id = names_transcripts['tr_id'].iloc[i]
         all_genes.append(gene_id)
         all_transcripts.append(tr_id)
-        gene_id = 'FBgn0053207'
-        tr_id = 'FBtr0083162'
-
-        gene_id = 'FBgn0266129'
-        tr_id = 'FBtr0072458'
-
-        gene_id = 'FBgn0052227'
-        tr_id = 'FBtr0074848dd'
 
         try:
             data, observations, gene_id, data_p, observations_p = load_single_gene(gene_id, tr_id)
@@ -174,8 +151,7 @@ def main():
 
     print(recorded_genes)
 
-    exit()
-
+    
     parameters_estimates_all_genes = pd.DataFrame(parameters_estimates_all_genes)
     parameters_estimates_all_genes.columns = ['D', 'S', 'variance', 'lengthscale', 'variance_m', 'variancve_p',
                                               'D_95_l', 'S_95_l', 'variance_95_l', 'lengthscale_95_l', 'variance_m_95_l', 'variancve_p_95_l',
