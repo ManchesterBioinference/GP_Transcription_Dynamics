@@ -1,19 +1,26 @@
 # GP_Transcription_Dynamics
 
-Python implementation of transcriptional regulation model with Gaussian processes based on [GPflow](https://www.gpflow.org/) and [TensorFlow probability](https://www.tensorflow.org/probability).
+Python implementation of the transcriptional regulation model with Gaussian processes using [GPflow](https://www.gpflow.org/) and [TensorFlow probability](https://www.tensorflow.org/probability).
 
-TRCD -- main model with constant degradation parameter. 
+TRCD -- contains the main model for the transcriptional regulation model. 
 
 ## Dependencies
 
 See requirenments.txt
 
+## Simulations:
+-- simulated_examples.py runs an experiment on simulated data (generates the data, fits trcd model and runs mcmc);
+
 ## Experiments:
--- filtering of the genes (identifying differentially expressed genes);
+Contains files for the experiments on real data. 
 
--- optimization of the parameters in transcriptional regulation model;
+-- filter_genes.py filtering of the genes (identifying differentially expressed genes);
 
--- MCMC for uncertainty quantification using MALA. 
+-- fit_model_filtered_genes.py optimization of the parameters in transcriptional regulation model;
+
+-- mcmc_single_gene.py/mcmc_all_genes.py MCMC for uncertainty quantification using MALA. 
+
+
 
 
 
