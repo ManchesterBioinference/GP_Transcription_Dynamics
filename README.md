@@ -2,11 +2,13 @@
 
 Python implementation of the transcriptional regulation model with Gaussian processes using [GPflow](https://www.gpflow.org/) and [TensorFlow probability](https://www.tensorflow.org/probability).
 
-TRCD -- contains the main model for the transcriptional regulation model. 
-
 ## Dependencies
 
 See requirenments.txt
+
+##  TRCD 
+
+-- contains the transcriptional regulation model (custom implementation of GPR for stacked time series; transcriptional regulation kernel).
 
 ## Simulations:
 -- simulated_examples.py runs an experiment on simulated data (generates the data, fits trcd model and runs mcmc);
