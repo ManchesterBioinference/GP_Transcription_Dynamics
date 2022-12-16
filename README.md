@@ -11,16 +11,16 @@ See requirenments.txt
 -- contains the transcriptional regulation model (custom implementation of GPR for stacked time series; transcriptional regulation kernel).
 
 ## Simulations:
--- simulated_examples.py runs an experiment on simulated data (generates the data, fits trcd model and runs MCMC);
+-- simulated_examples.py runs an experiment on simulated data (generates the data, fits trcd model and runs MCMC).
 
 ## Experiments:
 Contains files for the experiments on real data. 
 
--- filter_genes.py filtering of the genes (identifying differentially expressed genes);
+-- filter_genes.py/filter_genes_2rbf.py filtering of the genes (identifying differentially expressed genes);
 
--- fit_model_filtered_genes.py optimization of the parameters in transcriptional regulation model;
+-- fit_model_filtered_genes.py optimization of the parameters in transcriptional regulation model for genes that passed filtering;
 
--- mcmc_single_gene.py/mcmc_all_genes.py MCMC for uncertainty quantification using MALA. 
+-- mcmc_single_gene.py/mcmc_all_genes.py MCMC for uncertainty quantification using MALA on single gene/complete data set. 
 
 ## Utils:
 Contains helper functions for loading the data/fitting the model/running MCMC. 
