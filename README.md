@@ -20,7 +20,8 @@ Contains files for the experiments on real data.
 
 -- mcmc_single_gene.py/mcmc_all_genes.py MCMC for uncertainty quantification using MALA. 
 
-
+## Utils:
+Contains helper functions for loading the data/fitting the model/running MCMC. 
 
 
 
