@@ -11,7 +11,7 @@ See requirenments.txt
 -- contains the transcriptional regulation model (custom implementation of GPR for stacked time series; transcriptional regulation kernel).
 
 ## Simulations:
--- simulated_examples.py runs an experiment on simulated data (generates the data, fits trcd model and runs mcmc);
+-- simulated_examples.py runs an experiment on simulated data (generates the data, fits trcd model and runs MCMC);
 
 ## Experiments:
 Contains files for the experiments on real data. 
