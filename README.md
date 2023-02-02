@@ -25,7 +25,7 @@ Contains files for the experiments on real data.
 ## Utils:
 Contains helper functions for loading the data/fitting the model/running MCMC. 
 
-## Simulations:
+## Clustering:
 -- source code for clustering time series with [GPclust](https://github.com/SheffieldML/GPclust).
 
 
