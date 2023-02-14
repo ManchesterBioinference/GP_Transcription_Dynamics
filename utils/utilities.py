@@ -116,15 +116,28 @@ def fit_rbf(data, init_lengthscale, init_variance):
     k = gpflow.kernels.RBF()
     m = gpflow.models.GPR(data, kernel=k)
     m.likelihood.variance.assign(0.01)
-    def objective_closure():
-        return m.training_loss()
     m.kernel.lengthscales.assign(init_lengthscale)
     m.kernel.variance.assign(init_variance)
     opt = gpflow.optimizers.Scipy()
-    opt_logs = opt.minimize(objective_closure,
+    opt_logs = opt.minimize(m.training_loss,
                             m.trainable_variables,
                             options=dict(maxiter=100))
     return m, np.asarray(m.training_loss())
+
+# Alternative version
+#def fit_rbf(data, init_lengthscale, init_variance):
+#    k = gpflow.kernels.RBF()
+#    m = gpflow.models.GPR(data, kernel=k)
+#    m.likelihood.variance.assign(0.01)
+#    def objective_closure():
+#        return m.training_loss()
+#    m.kernel.lengthscales.assign(init_lengthscale)
+#    m.kernel.variance.assign(init_variance)
+#    opt = gpflow.optimizers.Scipy()
+#    opt_logs = opt.minimize(objective_closure,
+#                            m.trainable_variables,
+#                            options=dict(maxiter=100))
+#    return m, np.asarray(m.training_loss())
 
 def fit_noise(data, init_variance):
     k = gpflow.kernels.White()
@@ -228,46 +241,11 @@ def create_data() -> Tuple[Tuple[tf.Tensor, tf.Tensor], Tuple[tf.Tensor, tf.Tens
     return full_data, observations
 
 
-def load_single_gene1(gene_id, tr_id) -> Tuple[Tuple[tf.Tensor, tf.Tensor], Tuple[tf.Tensor, tf.Tensor, tf.Tensor]]:
-    # data = pd.read_csv('density_data_pickedup_cluster10.txt',sep=" ")
-    #data = pd.read_csv('density_data_keepdensitysumover10_withcluster.txt',sep=" ")
-    data1 = pd.read_csv('../data/LB_GP_TS.csv', sep=",")
-    data2 = pd.read_csv('../data/Exon_intron_counts_data_normalizedbylibrarydepthonly_20200120.txt',sep=" ")
-    #data1 = pd.read_csv('LB_genes_from_tr.csv',sep=",")
-    gene_id = gene_id
-    data1 = data1[data1['FBtr'] == tr_id]
-    data2 = data2[data2['FBgn'] == gene_id]
-    #genes = pd.read_csv('genes_Yuliya_full.csv',sep=" ")
-    data_m = data1[data1['FBtr'] == tr_id].iloc[0][1:31].to_numpy()
-    data_p = data2[data2['FBgn'] == gene_id].iloc[0][31:61].to_numpy()/data2[data2['FBgn'] == gene_id].iloc[0][62]
-
-    data_p = data_p*1000.0
-
-    #data_m = data_m*10.0
-    #data_p = data_p*10.0
-
-    t0 = np.array((95.0,105.0,115.0,125.0,145.0,160.0,175.0,190.0,205.0,220.0))
-    rep_no = 3
-    t = np.hstack((t0,t0,t0))[:,None]
-
-    tp_obs = np.asarray(t)
-    ym = np.asarray(data_m, dtype=np.float)
-    yp = np.asarray(data_p, dtype=np.float)
-    y_full = tf.convert_to_tensor(np.vstack((ym, yp)).reshape(60, 1))
-    x_full = tf.convert_to_tensor(np.vstack((tp_obs, tp_obs)).reshape(60, 1))
-    full_data = (dfloat(x_full), dfloat(y_full))
-    full_data_p = (dfloat(tp_obs), dfloat(yp))
-    observations = (dfloat(tp_obs), dfloat(ym), dfloat(yp))
-    observations_p = (dfloat(tp_obs), dfloat(yp))
-    return full_data, observations, gene_id, full_data_p, observations_p
-
 def load_single_gene_scaled(gene_id, tr_id) -> Tuple[Tuple[tf.Tensor, tf.Tensor], Tuple[tf.Tensor, tf.Tensor, tf.Tensor]]:
 
-    # data = pd.read_csv('density_data_pickedup_cluster10.txt',sep=" ")
-    #data = pd.read_csv('density_data_keepdensitysumover10_withcluster.txt',sep=" ")
     data1 = pd.read_csv('../data/LB_GP_TS.csv', sep=",")
     data2 = pd.read_csv('../data/Exon_intron_counts_data_normalizedbylibrarydepthonly_20200120.txt',sep=" ")
-    #data1 = pd.read_csv('LB_genes_from_tr.csv',sep=",")
+
     gene_id = gene_id
     data1 = data1[data1['FBtr'] == tr_id]
     data2 = data2[data2['FBgn'] == gene_id]
@@ -298,23 +276,16 @@ def load_single_gene_scaled(gene_id, tr_id) -> Tuple[Tuple[tf.Tensor, tf.Tensor]
 
 
 def load_single_gene(gene_id, tr_id) -> Tuple[Tuple[tf.Tensor, tf.Tensor], Tuple[tf.Tensor, tf.Tensor, tf.Tensor]]:
-
-    # data = pd.read_csv('density_data_pickedup_cluster10.txt',sep=" ")
-    #data = pd.read_csv('density_data_keepdensitysumover10_withcluster.txt',sep=" ")
     data1 = pd.read_csv('../data/LB_GP_TS.csv', sep=",")
     data2 = pd.read_csv('../data/Exon_intron_counts_data_normalizedbylibrarydepthonly_20200120.txt',sep=" ")
-    #data1 = pd.read_csv('LB_genes_from_tr.csv',sep=",")
+
     gene_id = gene_id
     data1 = data1[data1['FBtr'] == tr_id]
     data2 = data2[data2['FBgn'] == gene_id]
-    #genes = pd.read_csv('genes_Yuliya_full.csv',sep=" ")
     data_m = data1[data1['FBtr'] == tr_id].iloc[0][1:31].to_numpy()
     data_p = data2[data2['FBgn'] == gene_id].iloc[0][31:61].to_numpy()/data2[data2['FBgn'] == gene_id].iloc[0][62]
 
     data_p = data_p*1000.0
-
-    print('1000/length',1000/data2[data2['FBgn'] == gene_id].iloc[0][62])
-    print('length',data2[data2['FBgn'] == gene_id].iloc[0][62])
 
     t0 = np.array((95.0,105.0,115.0,125.0,145.0,160.0,175.0,190.0,205.0,220.0))
     rep_no = 3

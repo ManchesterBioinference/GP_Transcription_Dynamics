@@ -12,6 +12,8 @@ import pymc3
 
 import gpflow
 from gpflow.utilities import print_summary
+from gpflow.config import default_float
+
 from trcd.utils import SamplingHelper
 #from utilities_dpp import (HMCParameters, create_data, create_nuts_mcmc, create_standard_mcmc, create_trcd_model, handle_pool,
 #                       optimize_with_scipy_optimizer, select_parameters, load_single_gene,init_hyperparameters, predict_trcd, create_mala_mcmc,
@@ -21,6 +23,17 @@ gpflow.config.set_default_float(np.float64)  # noqa
 
 Scalar = TypeVar("Scalar", tf.Tensor, float)
 
+def experiment_print(step: int, msg: str):
+    tf.print(f"# [Step {step}] {msg}")
+
+
+def reset_parameters(parameters: List[gpflow.Parameter], values: List[tf.Tensor]):
+    for p, v in zip(parameters, values):
+        p.assign(v)
+
+
+def dfloat(value):  # default float
+    return tf.cast(value, default_float())
 
 def run_mcmc(run_chain_fn: Callable,
              hmc_helper: SamplingHelper,
