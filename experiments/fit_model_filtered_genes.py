@@ -9,7 +9,7 @@ from gpflow.config import default_float
 from gpflow.utilities import print_summary
 import sys
 sys.path.append('..')
-from utils.utilities import (create_data, load_data, load_single_gene, create_standard_mcmc, create_trcd_model,
+from utils.utilities import (load_single_gene, create_standard_mcmc, create_trcd_model,
                        optimize_with_scipy_optimizer,  fit_rbf, predict_trcd,
                        plot_trcd_predict, select_parameters, init_hyperparameters, compute_hessian)
 

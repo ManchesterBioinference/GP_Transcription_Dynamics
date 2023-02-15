@@ -20,8 +20,8 @@ from gpflow.utilities import print_summary
 import sys
 sys.path.append('..')
 from trcd.utils import SamplingHelper
-from utils.utilities import (fit_rbf, HMCParameters, create_data, create_nuts_mcmc, create_standard_mcmc, create_trcd_model, handle_pool,
-                       optimize_with_scipy_optimizer, select_parameters, load_single_gene,init_hyperparameters, predict_trcd, create_mala_mcmc,
+from utils.utilities import (fit_rbf, HMCParameters, create_nuts_mcmc, create_standard_mcmc, create_trcd_model, handle_pool,
+                       optimize_with_scipy_optimizer, select_parameters, load_single_gene, init_hyperparameters, predict_trcd, create_mala_mcmc,
                        plot_trcd_predict, compute_prior_hyperparameters_variance)
 
 
