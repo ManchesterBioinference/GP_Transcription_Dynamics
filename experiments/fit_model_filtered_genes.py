@@ -9,7 +9,7 @@ from gpflow.config import default_float
 from gpflow.utilities import print_summary
 import sys
 sys.path.append('..')
-from utils.utilities import (create_data, load_data, load_single_gene, load_filtered_data, create_standard_mcmc, create_trcd_model,
+from utils.utilities import (create_data, load_data, load_single_gene, create_standard_mcmc, create_trcd_model,
                        optimize_with_scipy_optimizer,  fit_rbf, predict_trcd,
                        plot_trcd_predict, select_parameters, init_hyperparameters, compute_hessian)
 
@@ -149,9 +149,6 @@ def main():
         except:
             print('data were not found')
 
-    print(recorded_genes)
-
-    
     parameters_estimates_all_genes = pd.DataFrame(parameters_estimates_all_genes)
     parameters_estimates_all_genes.columns = ['D', 'S', 'variance', 'lengthscale', 'variance_m', 'variancve_p',
                                               'D_95_l', 'S_95_l', 'variance_95_l', 'lengthscale_95_l', 'variance_m_95_l', 'variancve_p_95_l',

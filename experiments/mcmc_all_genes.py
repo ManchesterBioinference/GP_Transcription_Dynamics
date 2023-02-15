@@ -1,3 +1,7 @@
+'''
+File to run MCMC on all genes/set of genes
+'''
+
 from multiprocessing import cpu_count
 from multiprocessing.pool import Pool
 from pathlib import Path
@@ -145,8 +149,6 @@ def main():
     data1 = pd.read_csv('../data/LB_GP_TS.csv', sep=",")
     data2 = pd.read_csv('../data/Exon_intron_counts_data_normalizedbylibrarydepthonly_20200120.txt',sep=" ")
     gene_set = pd.read_csv('LB_zyg95_clusters_degradation.csv', sep=",")
-    gene_set = pd.read_csv('remaining_genes.csv', sep=",")
-
 
     gene_id_set = gene_set['gene_id'].to_numpy()
     tr_id_set = gene_set['tr_id'].to_numpy()
@@ -168,17 +170,12 @@ def main():
        'ci_lower': [],
        'ci_upper': []})
 
-    names_transcripts =  pd.read_csv('../data/int_c5_zygc1.csv', sep=",")
-    for i in range(50):
-    #for i in range(100,110):
+    for i in range(gene_id_set):
 
         print('GENE', i)
 
         gene_id = gene_id_set[i]
         tr_id = tr_id_set[i]
-
-        #gene_id = 'FFBgn0000490'
-        #tr_id = 'FBtr0077775'
 
         print('gene_id', gene_id, 'tr_id', tr_id)
 
@@ -259,10 +256,11 @@ def main():
             print(f"log posterior density at optimum: {trcd.model.log_posterior_density()}")
 
             gpflow.config.set_default_positive_minimum(1e-6)
-            #step_size_mala = np.array([0.02,0.04, 0.06])#
+
             step_size_mala = np.array([ 10**-5 , 10**-4 , 10**-3 , 0.003, 0.005, 0.001, 0.01, 0.03, 0.05, 0.07, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.5, 1])#
+            #step_size_mala = np.array([0.02,0.04, 0.06])
             #step_size_mala = np.array([0.003, 0.005, 0.01, 0.03, 0.05, 0.07, 0.1, 0.15])#
-            #step_size_mala = np.array([0.05])#
+            #step_size_mala = np.array([0.05])
 
             print(step_size_mala)
             for j in range(step_size_mala.shape[0]):
@@ -285,8 +283,6 @@ def main():
                     print('Experiment error')
         except:
              print('Error model fitting')
-
-
 
 
 if __name__ == "__main__":

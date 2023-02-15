@@ -47,7 +47,6 @@ genesID = []
 trID = []
 
 for i in range(len(names_transcripts)-1):
-#for i in range(0,5):
 
     gene_id = names_transcripts['FBgn'].iloc[i]
     tr_id = names_transcripts['FBtr'].iloc[i]

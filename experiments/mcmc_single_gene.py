@@ -159,50 +159,20 @@ def main():
        'ci_lower': [],
        'ci_upper': []})
 
-    names_transcripts =  pd.read_csv('../data/int_c5_zygc1.csv', sep=",")
-    i=0
-    gene_id = names_transcripts['gene_id'].iloc[i]
-    tr_id = names_transcripts['zygotic_transcript'].iloc[i]
+    ## Choose the index for the gene_id/tr_id
+    # names_transcripts =  pd.read_csv('../data/int_c5_zygc1.csv', sep=",")
+    # i=0
+    # gene_id = names_transcripts['gene_id'].iloc[i]
+    # tr_id = names_transcripts['zygotic_transcript'].iloc[i]
 
     # specify gene and transcription id
-    #gene_id = 'FBgn0015773'
-    #tr_id = 'FBtr0308337'
+    gene_id = 'FBgn0015773'
+    tr_id = 'FBtr0308337'
 
-    gene_id = 'FBgn0004635'
-    tr_id = 'FBtr0333207'
-
-    #FBgn0004635_FBtr0072694
-    #FBgn0004635_FBtr0333207
-
-    #FBgn0011723_FBtr0332070
-    #FBgn0011723_FBtr0332071
-
-    # gene_id = 'FBgn0011723'
-    # tr_id = 'FBtr0332071'
-    #
-    # gene_id = 'FBgn0004102'
-    # tr_id = 'FBtr0331305'
-    # #results mala- FBgn0004795-FBtr0340030-0.001
-    #
-    # gene_id = 'FBgn0004795'
-    # tr_id = 'FBtr0340030'
-
-
-    gene_id = 'FBgn0053207'
-    tr_id = 'FBtr0083162'
-
-    #gene_id = 'FBgn0266129'
-    #tr_id = 'FBtr0072458'
-
-    gene_id = "FBgn0033652"
-    tr_id = "FBtr0088030"
-
-    gene_id = "FBgn0000395"
-    tr_id = "FBtr0071610"
-
+    #gene_id = "FBgn0000395"
+    #tr_id = "FBtr0071610"
 
     data, observations, gene_id, data_p, observations_p = load_single_gene(gene_id, tr_id)
-
 
     '''
     Fit GP regression on pre-mRNA
@@ -231,6 +201,7 @@ def main():
     dict_parameters = select_parameters(dict_parameters,
                                         names=None)  # When `names` is None, same dictionary is returned.
 
+    # Choose to sample only for subset of parameters
     #dict_parameters = select_parameters(dict_parameters,
     #                                    names=['D', 'varaince', 'lengthscale', 'variance_m', 'variance_p'])  # When `names` is None, same dictionary is returned.
 
@@ -268,7 +239,6 @@ def main():
     # initial_values = [p.read_value() for p in parameters]
     # parameters_vector = tf.stack(parameters)
 
-    #exit()
 
     gpflow.config.set_default_positive_minimum(1e-6)
     step_size_mala = np.array([10**-5 , 10**-4 , 10**-3 , 0.003, 0.005, 0.01, 0.03, 0.05, 0.07, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.5, 1])#
@@ -292,9 +262,6 @@ def main():
             experiment_print(j, f"MCMC finished")
         except:
             print('Experiment error')
-
-
-
 
 
 if __name__ == "__main__":

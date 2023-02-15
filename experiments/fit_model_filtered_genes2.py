@@ -11,7 +11,7 @@ from gpflow.config import default_float
 from gpflow.utilities import print_summary
 import sys
 sys.path.append('..')
-from utils.utilities import (create_data, load_data, load_single_gene, load_filtered_data, create_standard_mcmc, create_trcd_model,
+from utils.utilities import (create_data, load_data, load_single_gene, create_standard_mcmc, create_trcd_model,
                        optimize_with_scipy_optimizer,  fit_rbf, predict_trcd,
                        plot_trcd_predict, select_parameters, init_hyperparameters, compute_hessian)
 
@@ -54,11 +54,10 @@ def main():
 
     n_genes = 10
 
-    for i in range(n_genes):
-    #for i in range(1):
+    #for i in range(n_genes):
+    for i in range(2):
         #gene_id = names_transcripts['FBgn'].iloc[i]
         #tr_id = names_transcripts['FBtr'].iloc[i]
-
 
         #gene_id = 'FBgn0266129'
         #tr_id = 'FBtr0072458'
@@ -159,10 +158,6 @@ def main():
 
         except:
             print('data were not found')
-
-    print(recorded_genes)
-
-    exit()
 
     parameters_estimates_all_genes = pd.DataFrame(parameters_estimates_all_genes)
     parameters_estimates_all_genes.columns = ['D', 'S', 'variance', 'lengthscale', 'variance_m', 'variancve_p',

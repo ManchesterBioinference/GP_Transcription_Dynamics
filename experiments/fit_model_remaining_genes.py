@@ -10,7 +10,7 @@ import gpflow
 from gpflow.utilities import print_summary
 import sys
 sys.path.append('..')
-from utils.utilities import (create_data, load_data, load_single_gene, load_filtered_data, create_standard_mcmc, create_trcd_model,
+from utils.utilities import (create_data, load_data, load_single_gene, create_standard_mcmc, create_trcd_model,
                        optimize_with_scipy_optimizer,  fit_rbf, predict_trcd,
                        plot_trcd_predict, select_parameters, init_hyperparameters, compute_hessian)
 
@@ -33,12 +33,10 @@ def main():
     t = np.hstack((t0,t0,t0))[:,None]
 
     t0 = np.array((95.0,105.0,115.0,125.0,145.0,160.0,175.0,190.0,205.0,220.0))
-    #names_transcripts =  pd.read_csv('gene_transcript_cl_10.csv', sep=",")
-    #names_transcripts =  pd.read_csv('../data/zygotic_tr_95_genes.csv', sep=";")
+
     names_transcripts = pd.read_csv('LB_zyg95_clusters_degradation.csv', sep=",")
-    #names_transcripts = names_transcripts.dropna()
-    n_genes = len(names_transcripts.index)
-    #n_genes = 5
+
+    #n_genes = len(names_transcripts.index)
 
     recorded_genes = []
     recorded_transcripts = []
@@ -64,7 +62,7 @@ def main():
         try:
             data, observations, gene_id, data_p, observations_p = load_single_gene(gene_id, tr_id)
 
-            print('Data found')
+
 
             '''
             Fit trcd model
@@ -73,10 +71,11 @@ def main():
             # Check if the distance from the predicted GP mean is not too far away from mean of observations
 
             initial_S = 1.0
+            initial_D = 0.1
             initial_lengthscale = 10.0
             initial_variance = 1.0
 
-            trcd, dict_parameters = create_trcd_model(data, initial_lengthscale, initial_variance, initial_S, transform_base=None)
+            trcd, dict_parameters = create_trcd_model(data, initial_lengthscale, initial_variance, initial_S,initial_D,  transform_base=None)
             dict_parameters = select_parameters(dict_parameters,
                                                 names=None)  # When `names` is None, same dictionary is returned.
             trcd.model.kernel.D.assign(0.01)
@@ -119,21 +118,16 @@ def main():
             recorded_genes.append(gene_id)
             recorded_transcripts.append(tr_id)
         except:
-            print('data were not found')
-
-    print(recorded_genes)
-
+            print('Data were not found or Cholesky error; check input data and try multiple restarts.')
 
     parameters_estimates_all_genes = pd.DataFrame(parameters_estimates_all_genes)
     parameters_estimates_all_genes.columns = ['D', 'S', 'variance', 'lengthscale', 'variance_m', 'variancve_p',
                                               'D_95_l', 'S_95_l', 'variance_95_l', 'lengthscale_95_l', 'variance_m_95_l', 'variancve_p_95_l',
                                               'D_95_u', 'S_95_u', 'variance_95_u', 'lengthscale_95_u', 'variance_m_95_u', 'variancve_p_95_u']
 
-    print(parameters_estimates_all_genes)
     parameters_estimates_all_genes['gene_id'] = gene_ids
     parameters_estimates_all_genes['tr_id'] = tr_ids
     parameters_estimates_all_genes.to_csv("../output/parameters_estimates_remaining_genes.csv")
-    print(parameters_estimates_all_genes)
 
 
 if __name__ == "__main__":
