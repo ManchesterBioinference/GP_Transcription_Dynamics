@@ -32,7 +32,7 @@ from utils.utils_simulations import (load_single_gene, plot_trcd_predict, genera
 from utils.utils_mcmc import (run_mcmc, run_mala, analyse_samples, experiment_print, reset_parameters, dfloat)
 
 '''
-For running MCMC set run_mcmc = True.
+For running MCMC set run_mcmc = True. Running MCMC might take a while.
 '''
 
 run_mcmc =  False
@@ -84,7 +84,6 @@ dict_parameters = select_parameters(dict_parameters,
 #trcd.model.likelihood.variance_m.assign(var_m)
 #trcd.model.likelihood.variance_p.assign(var_p)
 
-
 '''
 Optimize the model
 '''
@@ -120,7 +119,6 @@ if(run_mcmc == True):
 
     print(f"log posterior density at optimum: {trcd.model.log_posterior_density()}")
 
-    #print(step_size_mala)
     for j in range(step_size_mala.shape[0]):
         step_size = step_size_mala[j]
 
@@ -140,4 +138,4 @@ if(run_mcmc == True):
             reset_parameters(parameters, parameters_estimates)
             experiment_print(j, f"MCMC finished")
         except:
-            print('Experiment error')
+            print('Experiment error, likely step size was not optimal')

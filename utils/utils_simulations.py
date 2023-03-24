@@ -78,19 +78,23 @@ def load_single_gene(gene_id, tr_id) -> Tuple[Tuple[tf.Tensor, tf.Tensor], Tuple
 
 
 def plot_trcd_predict(cluster, trcd: tf.Module, tr_id, gene_id, observations: Observations, var_m_noise, var_p_noise, num_predict: int = 100):
-
+    '''
+    Plot predictions for trcd model;
+    Resulted plots include uncertainty to f and y.
+    '''
     tp_obs, ym, yp = [np.array(o) for o in observations]
 
     xx = np.linspace(np.min(tp_obs), np.max(tp_obs), num_predict).reshape(num_predict, 1)
     xx_full = np.concatenate((xx, xx)).reshape(-1, 1)
+    ## TO DO: See if there is a more neat way for predicting through using trcd.model.predict_y() function
     #
     #gpflow.config.set_default_jitter(0.5)
-    try:
-        #print('predicted y')
-        mean, var = trcd.model.predict_y(xx_full)
-    except:
-        print('predicted y failed, predicted f')
-        mean, var = trcd.model.predict_f(xx_full)
+    #try:
+    #    #print('predicted y')
+    #mean, var = trcd.model.predict_y(xx_full)
+    #except:
+    #    print('predicted y failed, predicted f')
+    mean, var = trcd.model.predict_f(xx_full)
 
     mean1 = mean[0:num_predict]
     mean2 = mean[num_predict:2 * num_predict]
