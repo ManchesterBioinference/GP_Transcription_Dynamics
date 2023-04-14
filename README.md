@@ -4,7 +4,7 @@ Python implementation of the transcriptional regulation model with Gaussian proc
 
 ## Dependencies
 
-See requirenments.txt
+See requirenments.txt for full reproducibility; for lighter version of the code check simulations_python39 with lighter requirements. 
 
 ##  TRCD 
 
