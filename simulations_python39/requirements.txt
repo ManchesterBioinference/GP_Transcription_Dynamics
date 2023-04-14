@@ -1,0 +1,8 @@
+numpy
+pandas
+matplotlib
+tensorflow
+tensorflow_probability
+gpflow
+pymc3
+arviz
