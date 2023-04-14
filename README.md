@@ -13,6 +13,12 @@ See requirenments.txt
 ## Simulations:
 -- simulated_examples.py runs an experiment on simulated data (generates the data, fits trcd model and runs MCMC).
 
+## Simulations_python39:
+-- Same as simulations, but with a few updates from latest version of the libraries (i.e., gpflow); 
+-- Minimal requirements compared to the main directory; 
+-- Runs on Mac M1, but tensorflow needs to be installed accordingly (see, tensorflow instructions [here](https://caffeinedev.medium.com/how-to-install-tensorflow-on-m1-mac-8e9b91d93706));
+-- simulated_examples.py runs an experiment on simulated data (generates the data, fits trcd model and runs MCMC).
+
 ## Experiments:
 Contains files for the experiments on real data. 
 
