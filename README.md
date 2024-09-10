@@ -1,6 +1,6 @@
 # GP_Transcription_Dynamics
 
-Python implementation of the transcriptional regulation model with Gaussian processes using [GPflow](https://www.gpflow.org/) and [TensorFlow probability](https://www.tensorflow.org/probability).
+Python implementation of the transcriptional regulation model with Gaussian processes using [GPflow](https://www.gpflow.org/) and [TensorFlow probability](https://www.tensorflow.org/probability). The code here reproduces modelling results from the paper [Combined modelling of mRNA decay dynamics and single-molecule imaging in the Drosophila embryo uncovers a role for P-bodies in 5' to 3' degradation](https://journals.plos.org/plosbiology/article?id=10.1371/journal.pbio.3001956).
 
 ## Dependencies
 
